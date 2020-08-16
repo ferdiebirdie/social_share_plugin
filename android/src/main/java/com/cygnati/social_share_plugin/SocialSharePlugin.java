@@ -15,6 +15,7 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.share.Sharer;
+import com.facebook.share.ShareApi;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.model.SharePhoto;
 import com.facebook.share.model.SharePhotoContent;
@@ -247,10 +248,8 @@ public class SocialSharePlugin
     }
 
     private void facebookShareLink(String quote, String url) {
-        final Uri uri = Uri.parse(url);
-        final ShareLinkContent content = new ShareLinkContent.Builder().setContentUrl(uri).setQuote(quote).build();
-        final ShareDialog shareDialog = new ShareDialog(activity);
-        shareDialog.registerCallback(callbackManager, new FacebookCallback<Sharer.Result>() {
+        final ShareLinkContent content = new ShareLinkContent.Builder().setContentUrl(Uri.parse(url)).setQuote(quote).build();
+        FacebookCallback callback = new FacebookCallback<Sharer.Result>() {
             @Override
             public void onSuccess(Sharer.Result result) {
                 channel.invokeMethod("onSuccess", null);
@@ -268,10 +267,15 @@ public class SocialSharePlugin
                 channel.invokeMethod("onError", error.getMessage());
                 Log.d("SocialSharePlugin", "Sharing error occurred.");
             }
-        });
+        };
 
         if (ShareDialog.canShow(ShareLinkContent.class)) {
-            shareDialog.show(content);
+          final ShareDialog shareDialog = new ShareDialog(activity);
+          shareDialog.registerCallback(callbackManager, callback);
+          shareDialog.show(content);
+        }
+        else {
+          ShareApi.share(content, callback);
         }
     }
 
